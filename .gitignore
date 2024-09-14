@@ -1,3 +1,4 @@
+backend/secrets1.py
 backend/secrets.py
 backend/venv
 backend/gcp-api.json
