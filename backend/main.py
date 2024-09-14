@@ -23,7 +23,6 @@ from sp_recog import detect_speech
 from constants.valid_command_prefixes import valid_command_prefixes
 from voiceover import play_audio_pygame
 
-
 dotenv.load_dotenv(".env")
 openai_key = os.environ.get("OPENAI_API_KEY")
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GOOGLE_APPLICATION_CREDENTIALS
