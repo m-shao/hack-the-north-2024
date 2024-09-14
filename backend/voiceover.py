@@ -5,6 +5,7 @@ from secrets import GOOGLE_APPLICATION_CREDENTIALS
 import sounddevice as sd
 from pydub import AudioSegment
 import io
+import numpy as np
 
 from google.cloud import texttospeech
 
@@ -34,12 +35,7 @@ response = client.synthesize_speech(
     audio_config=audio_config
 )
 
-audio = AudioSegment.from_file(io.BytesIO(response.audio_content), format="mp3")
+raw_audio = np.frombuffer(response.audio_content, dtype=np.int16)
 
-print(audio)
-
-# Save the response audio to an output file
-with open("output.mp3", "wb") as out:
-    # Write the response to the output file
-    out.write(response.audio_content)
-    print('Audio content written to file "output.mp3"')
+sample_rate = 24000  # Default sample rate for LINEAR16 in Google TTS
+sd.play(raw_audio, samplerate=sample_rate, blocking=True)
