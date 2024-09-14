@@ -11,6 +11,8 @@ google-cloud-texttospeech = "^2.17.2"
 pygame = "^2.6.0"
 levenshtein = "^0.25.1"
 scikit-learn = "^1.5.2"
+speechrecognition = "^3.10.4"
+pyaudio = "^0.2.14"
 
 
 [build-system]

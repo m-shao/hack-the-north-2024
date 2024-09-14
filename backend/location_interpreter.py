@@ -2,9 +2,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import time
 
-from roomslist import rooms
+from constants.roomslist import rooms as room_names
 
-def find_most_similar_room(user_input, room_names):
+def find_most_similar_room(user_input):
     # Combine the user input with the room names
     all_texts = [user_input] + room_names
     
