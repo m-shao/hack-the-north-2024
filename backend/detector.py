@@ -1,5 +1,5 @@
 import os
-from cv2 import VideoCapture, imshow, imwrite
+from cv2 import VideoCapture, imwrite
 from openai import OpenAI
 import dotenv
 import base64
@@ -15,7 +15,6 @@ def capture_image():
 
     result, image = cam.read()
     if result:
-        # saving image in local storage
         imwrite("captured_image.png", image)
     else:
         print("No image detected. Please! try again")
@@ -48,8 +47,7 @@ def get_image_text():
                     {
                         "type": "text",
                         "text": "I am a visually impaired person, describe the image to me in a way to help me better "
-                                "understand it. 1-2 sentences, describe where key objects (such as persons) are.Z"
-                                "the best."
+                                "understand it. 1-2 sentences, describe where key objects (such as persons) are."
                     },
                     {
                         "type": "image_url",
