@@ -1,4 +1,5 @@
 valid_command_prefixes = [
+    "navigate to",
     "i want to go to",
     "go to",
     "i want to find",

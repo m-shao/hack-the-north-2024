@@ -22,6 +22,7 @@ from location_interpreter import find_most_similar_room
 from sp_recog import detect_speech
 from constants.valid_command_prefixes import valid_command_prefixes
 from voiceover import play_audio_pygame
+import time
 
 dotenv.load_dotenv(".env")
 openai_key = os.environ.get("OPENAI_API_KEY")
@@ -118,6 +119,13 @@ def get_input():
                     most_similar_room = find_most_similar_room(user_output)
                     print(most_similar_room)
                     play_audio_pygame(f"Starting navigation to {most_similar_room}")
+
+                    navigation = sending_location(most_similar_room)
+
+
+
+
+
                 else:
                     periodic_detector(user_output)
                 # with open("output.mp3", "wb") as out:
@@ -125,6 +133,32 @@ def get_input():
                 # playsound('output.mp3')
         else:
             pass
+
+
+def sending_location(location: str):
+    file_path = '../frontend/public/data.json'
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    data["back_to_front_location"] = location  # Modify the location
+
+    # Write the updated data back to the JSON file
+    with open('data.json', 'w') as file:
+        json.dump(data, file, indent=4)
+
+    while True:
+        # Read the JSON file
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+
+        # Check if 'front_to_back_route' has a value
+        if data.get("front_to_back_route"):
+            play_audio_pygame(data.get("front_to_back_route"))
+            data["front_to_back_route"] = ""
+            with open(file_path, 'w') as file:
+                json.dump(data, file, indent=4)
+            break
+
+        time.sleep(0.3)
 
 
 def text_to_speech(text):
