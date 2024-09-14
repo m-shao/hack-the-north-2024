@@ -1,41 +1,56 @@
-import requests
-import json
 import os
 from secrets import GOOGLE_APPLICATION_CREDENTIALS
-import sounddevice as sd
-from pydub import AudioSegment
 import io
-import numpy as np
-
+import pygame
 from google.cloud import texttospeech
+import threading
 
+def text_to_speech(text):
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GOOGLE_APPLICATION_CREDENTIALS
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GOOGLE_APPLICATION_CREDENTIALS
+    # Initialize the client
+    client = texttospeech.TextToSpeechClient()
 
-# Initialize the client
-client = texttospeech.TextToSpeechClient()
+    # Set the text input to be synthesized
+    synthesis_input = texttospeech.SynthesisInput(text=text)
 
-# Set the text input to be synthesized
-synthesis_input = texttospeech.SynthesisInput(text="Hello, world!")
+    # Build the voice request, select the language code ("en-US") and the voice name
+    voice = texttospeech.VoiceSelectionParams(
+        language_code="en-US",
+        name="en-US-Studio-O"
+    )
 
-# Build the voice request, select the language code ("en-US") and the voice name
-voice = texttospeech.VoiceSelectionParams(
-    language_code="en-US",
-    name="en-US-Studio-O")
+    # Select the type of audio file you want returned
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.MP3
+    )
 
-# Select the type of audio file you want returned
-audio_config = texttospeech.AudioConfig(
-    audio_encoding=texttospeech.AudioEncoding.MP3
-)
+    # Perform the text-to-speech request on the text input with the selected voice parameters and audio file type
+    response = client.synthesize_speech(
+        input=synthesis_input,
+        voice=voice,
+        audio_config=audio_config
+    )
+    
+    return response
 
-# Perform the text-to-speech request on the text input with the selected voice parameters and audio file type
-response = client.synthesize_speech(
-    input=synthesis_input,
-    voice=voice,
-    audio_config=audio_config
-)
+def play_audio(audio_content):
+    
+    # Initialize pygame mixer
+    pygame.mixer.init()
 
-raw_audio = np.frombuffer(response.audio_content, dtype=np.int16)
+    # Load the MP3 data into a pygame Sound object from memory
+    pygame.mixer.music.load(io.BytesIO(audio_content))
 
-sample_rate = 24000  # Default sample rate for LINEAR16 in Google TTS
-sd.play(raw_audio, samplerate=sample_rate, blocking=True)
+    # Play the sound
+    pygame.mixer.music.play()    
+
+    # Keep the program running until the sound finishes playing
+    while pygame.mixer.music.get_busy():
+        pygame.time.Clock().tick(10)
+
+if __name__ == "__main__":    
+    response = text_to_speech("Hello, world!")
+        
+    audio_thread = threading.Thread(target=play_audio, args=(response.audio_content,))
+    audio_thread.start()
