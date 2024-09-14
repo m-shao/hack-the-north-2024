@@ -1,5 +1,5 @@
 import os
-from cv2 import VideoCapture, imwrite
+from cv2 import VideoCapture, imwrite, waitKey
 from openai import OpenAI
 import dotenv
 import base64
@@ -7,11 +7,22 @@ import requests
 import speech_recognition as sr
 import threading
 import keyboard
+import requests
+import json
+import os
+from secrets import GOOGLE_APPLICATION_CREDENTIALS
+import sounddevice as sd
+from pydub import AudioSegment
+import io
+from playsound import playsound
+from google.cloud import texttospeech
+import threading
+from pynput.keyboard import Key, Listener
 
 dotenv.load_dotenv(".env")
 openai_key = os.environ.get("OPENAI_API_KEY")
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GOOGLE_APPLICATION_CREDENTIALS
 client = OpenAI(api_key=openai_key)
-r = sr.Recognizer()
 
 
 def periodic_detector():
@@ -69,29 +80,96 @@ def periodic_detector():
 
 
 def get_input():
+    r = sr.Recognizer()
+
     mic_error = False
     with sr.Microphone() as source:
+        print("Talk")
+        r.adjust_for_ambient_noise(source, duration=0.2)
         audio_text = r.listen(source)
+        print("Time over, thanks")
 
         try:
+
             user_output = r.recognize_google(audio_text)
         except:
             mic_error = True
+    print("asdasd")
     if not mic_error:
         return user_output
     else:
         return mic_error
 
 
-while True:
-    # periodic_detector()
-    if keyboard.is_pressed('esc'):
-        print("Loop terminated by user.")
-        break
-    if keyboard.is_pressed('t'):
-        # PLAY AUDIO SIMILAR TO SIRI
-        print("starting audio")
-        user_output = get_input()
-        if not user_output:
+def text_to_speech(text):
+    client = texttospeech.TextToSpeechClient()
 
+    synthesis_input = texttospeech.SynthesisInput(text=text)
+
+    voice = texttospeech.VoiceSelectionParams(
+        language_code="en-US",
+        name="en-US-Studio-O"
+    )
+
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.MP3
+    )
+
+    response = client.synthesize_speech(
+        input=synthesis_input,
+        voice=voice,
+        audio_config=audio_config
+    )
+
+    return response
+
+
+def use_helper(text):
+    completion = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a tutor who takes a textbook and summarizes it in 50 words",
+            },
+            {"role": "user", "content": text},
+        ],
+    )
+
+    return completion.choices[0].message.content
+
+
+while True:
+    def on_press(key):
+        print('{0} pressed'.format(
+            key))
+
+
+    def on_release(key):
+        print('{0} release'.format(
+            key))
+        if key == Key.esc:
+            # Stop listener
+            return False
+        if key == Key.space:
+            print("starting audio")
+            user_output = get_input()
+            print("asd")
+            if not user_output:
+                playsound("audio_not_found.mp3")
+            else:
+                with open("output.mp3", "wb") as out:
+                    out.write(text_to_speech(use_helper(user_output)).audio_content)
+                playsound('output.mp3')
+
+
+    # Collect events until released
+    with Listener(
+            on_press=on_press,
+            on_release=on_release) as listener:
+        listener.join()
+
+    # if keyboard.is_pressed('esc'):
+    #     print("Loop terminated by user.")
+    #     break
 

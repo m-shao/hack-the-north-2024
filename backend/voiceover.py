@@ -9,9 +9,10 @@ from playsound import playsound
 from google.cloud import texttospeech
 import threading
 
-def text_to_speech(text):
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GOOGLE_APPLICATION_CREDENTIALS
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GOOGLE_APPLICATION_CREDENTIALS
 
+
+def text_to_speech(text):
     # Initialize the client
     client = texttospeech.TextToSpeechClient()
 
@@ -38,17 +39,10 @@ def text_to_speech(text):
 
     return response
 
-audio = AudioSegment.from_file(io.BytesIO(text_to_speech("hello world").audio_content), format="mp3")
-playsound(audio)
-print(audio)
 
-# Save the response audio to an output file
-# with open("output.mp3", "wb") as out:
-#     # Write the response to the output file
-#     out.write(response.audio_content)
-#     print('Audio content written to file "output.mp3"')
-# playsound('output.mp3')
-
+with open("audio_not_found.mp3", "wb") as out:
+    out.write(text_to_speech("hello world testing").audio_content)
+playsound('output.mp3')
 
 # THREEDED AT BOTTOM
 #     # Keep the program running until the sound finishes playing
