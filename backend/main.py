@@ -18,6 +18,11 @@ from playsound import playsound
 from google.cloud import texttospeech
 import threading
 from pynput.keyboard import Key, Listener
+from location_interpreter import find_most_similar_room
+from sp_recog import detect_speech
+from constants.valid_command_prefixes import valid_command_prefixes
+from voiceover import play_audio_pygame
+
 
 dotenv.load_dotenv(".env")
 openai_key = os.environ.get("OPENAI_API_KEY")
@@ -89,10 +94,10 @@ def get_input():
 
         mic_error = False
         with sr.Microphone() as source:
-            print("Talk")
-            r.adjust_for_ambient_noise(source, 0.5)
+            print("Receiving input.")
+            r.adjust_for_ambient_noise(source, 1)
             audio_text = r.listen(source)
-            print("Time over, thanks")
+            print("Input received.")
 
             try:
                 user_output = r.recognize_google(audio_text)
@@ -103,10 +108,22 @@ def get_input():
 
             user_output = user_output.lower()
             if "hello" in user_output and "world" in user_output:
+                room = False
+
+                for prefix in valid_command_prefixes:
+                    if prefix in user_output.lower():
+                        user_output = user_output.lower().split(prefix)[1]
+                        room = True
+                        break
+                if room:
+                    most_similar_room = find_most_similar_room(user_output)
+                    print(most_similar_room)
+                    play_audio_pygame(f"Starting navigation to {most_similar_room}")
+                else:
+                    periodic_detector(user_output)
                 # with open("output.mp3", "wb") as out:
                 #     out.write(text_to_speech(use_helper(user_output)).audio_content)
                 # playsound('output.mp3')
-                periodic_detector(user_output)
         else:
             pass
 
@@ -133,21 +150,6 @@ def text_to_speech(text):
 
     return response
 
-# Unable to implement this
-# def use_helper(text):
-# completion = client.chat.completions.create(
-#     model="gpt-4o-mini",
-#     messages=[
-#         {
-#             "role": "system",
-#             "content": "Your roll is to help the visually impaired.",
-#         },
-#         {"role": "user", "content": text},
-#     ],
-# )
-# print(completion)
-#
-# return completion.choices[0].message.content
 
 
 while True:
