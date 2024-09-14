@@ -10,7 +10,7 @@ import keyboard
 import requests
 import json
 import os
-from secrets import GOOGLE_APPLICATION_CREDENTIALS
+from secrets1 import GOOGLE_APPLICATION_CREDENTIALS
 import sounddevice as sd
 from pydub import AudioSegment
 import io
@@ -25,7 +25,8 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GOOGLE_APPLICATION_CREDENTIALS
 client = OpenAI(api_key=openai_key)
 
 
-def periodic_detector():
+def periodic_detector(text):
+    print("this is running")
     cam = VideoCapture(0)
 
     result, image = cam.read()
@@ -53,14 +54,13 @@ def periodic_detector():
         "model": "gpt-4o-mini",
         "messages": [
             {"role": "system",
-             "content": "You are designed to help describe the environments around a visually impaired person."},
+             "content": "You are designed to help describe the environments around a visually impaired person. I am a visually impaired person, describe the image to me in a way to help me better understand it. 1-2 short sentences, keep it concise, describe where key objects (such as persons) are."},
             {
                 "role": "user",
                 "content": [
                     {
                         "type": "text",
-                        "text": "I am a visually impaired person, describe the image to me in a way to help me better "
-                                "understand it. 1-2 sentences, describe where key objects (such as persons) are."
+                        "text": f"{text}"
                     },
                     {
                         "type": "image_url",
@@ -76,29 +76,39 @@ def periodic_detector():
 
     response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
 
-    print(response.json())
+    # print(response.json())
+    with open("output.mp3", "wb") as out:
+        out.write(text_to_speech(response.json()['choices'][0]['message']['content']).audio_content)
+    playsound('output.mp3')
 
 
 def get_input():
-    r = sr.Recognizer()
+    playsound("startup.wav")
+    while True:
+        r = sr.Recognizer()
 
-    mic_error = False
-    with sr.Microphone() as source:
-        print("Talk")
-        r.adjust_for_ambient_noise(source, duration=0.2)
-        audio_text = r.listen(source)
-        print("Time over, thanks")
+        mic_error = False
+        with sr.Microphone() as source:
+            print("Talk")
+            r.adjust_for_ambient_noise(source, 0.5)
+            audio_text = r.listen(source)
+            print("Time over, thanks")
 
-        try:
+            try:
+                user_output = r.recognize_google(audio_text)
+            except:
+                mic_error = True
+        if not mic_error:
+            print("user input: ", user_output)
 
-            user_output = r.recognize_google(audio_text)
-        except:
-            mic_error = True
-    print("asdasd")
-    if not mic_error:
-        return user_output
-    else:
-        return mic_error
+            user_output = user_output.lower()
+            if "hello" in user_output and "world" in user_output:
+                # with open("output.mp3", "wb") as out:
+                #     out.write(text_to_speech(use_helper(user_output)).audio_content)
+                # playsound('output.mp3')
+                periodic_detector(user_output)
+        else:
+            pass
 
 
 def text_to_speech(text):
@@ -123,53 +133,56 @@ def text_to_speech(text):
 
     return response
 
-
-def use_helper(text):
-    completion = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a tutor who takes a textbook and summarizes it in 50 words",
-            },
-            {"role": "user", "content": text},
-        ],
-    )
-
-    return completion.choices[0].message.content
+# Unable to implement this
+# def use_helper(text):
+# completion = client.chat.completions.create(
+#     model="gpt-4o-mini",
+#     messages=[
+#         {
+#             "role": "system",
+#             "content": "Your roll is to help the visually impaired.",
+#         },
+#         {"role": "user", "content": text},
+#     ],
+# )
+# print(completion)
+#
+# return completion.choices[0].message.content
 
 
 while True:
-    def on_press(key):
-        print('{0} pressed'.format(
-            key))
+    # periodic_detector()
+    # t2 = threading.Thread(periodic_detector(), args=())
 
+    t1 = threading.Thread(get_input(), args=(), daemon=True)
+    t1.start()
 
-    def on_release(key):
-        print('{0} release'.format(
-            key))
-        if key == Key.esc:
-            # Stop listener
-            return False
-        if key == Key.space:
-            print("starting audio")
-            user_output = get_input()
-            print("asd")
-            if not user_output:
-                playsound("audio_not_found.mp3")
-            else:
-                with open("output.mp3", "wb") as out:
-                    out.write(text_to_speech(use_helper(user_output)).audio_content)
-                playsound('output.mp3')
+    t1.join()
 
+    # periodic_detector()
 
-    # Collect events until released
-    with Listener(
-            on_press=on_press,
-            on_release=on_release) as listener:
-        listener.join()
+    # def on_press(key):
+    #     print('{0} pressed'.format(
+    #         key))
 
-    # if keyboard.is_pressed('esc'):
-    #     print("Loop terminated by user.")
-    #     break
+    # def on_release(key):
+    #     print('{0} release'.format(
+    #         key))
+    #     if key == Key.esc:
+    #         # Stop listener
+    #         return False
+    #     if key == Key.space:
+    #         print("starting audio")
+    #         user_output = get_input()
+    #         print("asd")
+    #         if not user_output:
+    #             playsound("audio_not_found.mp3")
+    #         else:
+    #             with open("output.mp3", "wb") as out:
+    #                 out.write(text_to_speech(use_helper(user_output)).audio_content)
+    #             playsound('output.mp3')
 
+    # with Listener(
+    #         on_press=on_press,
+    #         on_release=on_release) as listener:
+    #     listener.join()
