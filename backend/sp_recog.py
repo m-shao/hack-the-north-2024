@@ -10,6 +10,7 @@ def detect_speech():
     """
     with sr.Microphone() as source:
         print("Talk")
+        r.adjust_for_ambient_noise(source, duration=1)
         audio_text = r.listen(source)
         print("Time over, thanks")
 
