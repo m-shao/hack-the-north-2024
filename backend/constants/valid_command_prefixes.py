@@ -20,4 +20,9 @@ valid_command_prefixes = [
     "bring me to",
     "i want to be taken to",
     "i want to be brought to",
+    "take me to",
+    "give me directions to",
+    "lead me to",
+    "show me the way to",
+    
 ]
