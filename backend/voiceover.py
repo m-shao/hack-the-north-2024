@@ -1,7 +1,11 @@
+import requests
+import json
 import os
 from secrets import GOOGLE_APPLICATION_CREDENTIALS
+import sounddevice as sd
+from pydub import AudioSegment
 import io
-import pygame
+from playsound import playsound
 from google.cloud import texttospeech
 import threading
 
@@ -31,26 +35,28 @@ def text_to_speech(text):
         voice=voice,
         audio_config=audio_config
     )
-    
+
     return response
 
-def play_audio(audio_content):
-    
-    # Initialize pygame mixer
-    pygame.mixer.init()
+audio = AudioSegment.from_file(io.BytesIO(text_to_speech("hello world").audio_content), format="mp3")
+playsound(audio)
+print(audio)
 
-    # Load the MP3 data into a pygame Sound object from memory
-    pygame.mixer.music.load(io.BytesIO(audio_content))
+# Save the response audio to an output file
+# with open("output.mp3", "wb") as out:
+#     # Write the response to the output file
+#     out.write(response.audio_content)
+#     print('Audio content written to file "output.mp3"')
+# playsound('output.mp3')
 
-    # Play the sound
-    pygame.mixer.music.play()    
 
-    # Keep the program running until the sound finishes playing
-    while pygame.mixer.music.get_busy():
-        pygame.time.Clock().tick(10)
-
-if __name__ == "__main__":    
-    response = text_to_speech("Hello, world!")
-        
-    audio_thread = threading.Thread(target=play_audio, args=(response.audio_content,))
-    audio_thread.start()
+# THREEDED AT BOTTOM
+#     # Keep the program running until the sound finishes playing
+#     while pygame.mixer.music.get_busy():
+#         pygame.time.Clock().tick(10)
+#
+# if __name__ == "__main__":
+#     response = text_to_speech("Hello, world!")
+#
+#     audio_thread = threading.Thread(target=play_audio, args=(response.audio_content,))
+#     audio_thread.start()

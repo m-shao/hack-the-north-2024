@@ -4,13 +4,17 @@ from openai import OpenAI
 import dotenv
 import base64
 import requests
+import speech_recognition as sr
+import threading
+import keyboard
 
 dotenv.load_dotenv(".env")
 openai_key = os.environ.get("OPENAI_API_KEY")
 client = OpenAI(api_key=openai_key)
+r = sr.Recognizer()
 
 
-def capture_image():
+def periodic_detector():
     cam = VideoCapture(0)
 
     result, image = cam.read()
@@ -19,8 +23,6 @@ def capture_image():
     else:
         print("No image detected. Please! try again")
 
-
-def get_image_text():
     # Function to encode the image
     def encode_image(image_path):
         with open(image_path, "rb") as image_file:
@@ -66,5 +68,30 @@ def get_image_text():
     print(response.json())
 
 
-capture_image()
-get_image_text()
+def get_input():
+    mic_error = False
+    with sr.Microphone() as source:
+        audio_text = r.listen(source)
+
+        try:
+            user_output = r.recognize_google(audio_text)
+        except:
+            mic_error = True
+    if not mic_error:
+        return user_output
+    else:
+        return mic_error
+
+
+while True:
+    # periodic_detector()
+    if keyboard.is_pressed('esc'):
+        print("Loop terminated by user.")
+        break
+    if keyboard.is_pressed('t'):
+        # PLAY AUDIO SIMILAR TO SIRI
+        print("starting audio")
+        user_output = get_input()
+        if not user_output:
+
+
