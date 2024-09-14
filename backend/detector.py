@@ -48,7 +48,7 @@ def get_image_text():
                     {
                         "type": "text",
                         "text": "I am a visually impaired person, describe the image to me in a way to help me better "
-                                "understand it"
+                                "understand it. 1-2 sentences, describe where key objects (such as persons) are.Z"
                                 "the best."
                     },
                     {
