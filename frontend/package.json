@@ -9,7 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@fortawesome/free-solid-svg-icons": "^6.6.0",
+    "@fortawesome/react-fontawesome": "github:fortawesome/react-fontawesome",
     "@mappedin/mappedin-js": "^6.0.1-beta.3",
+    "firebase": "^10.13.1",
+    "fortawesome": "^0.0.1-security",
     "next": "^14.2.11",
     "react": "^18",
     "react-dom": "^18",

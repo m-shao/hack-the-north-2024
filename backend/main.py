@@ -23,11 +23,19 @@ from sp_recog import detect_speech
 from constants.valid_command_prefixes import valid_command_prefixes
 from voiceover import play_audio_pygame
 import time
+import firebase_admin
+import firebase
+from firebase_admin import credentials, firestore
 
 dotenv.load_dotenv(".env")
 openai_key = os.environ.get("OPENAI_API_KEY")
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GOOGLE_APPLICATION_CREDENTIALS
 client = OpenAI(api_key=openai_key)
+
+cred = credentials.Certificate("firebase.json")
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+
 
 
 def periodic_detector(text):
@@ -89,11 +97,15 @@ def periodic_detector(text):
 
 def get_input():
     playsound("startup.wav")
+    # https://medium.com/@happynehra/%EF%B8%8F-connecting-to-the-microphone-and-processing-speech-with-python-a23b7f463467
+    print(sr.Microphone.list_microphone_names())
     while True:
+
         r = sr.Recognizer()
+        print(sr.Microphone.list_microphone_names())
 
         mic_error = False
-        with sr.Microphone() as source:
+        with sr.Microphone(device_index=4) as source:
             print("Receiving input.")
             r.adjust_for_ambient_noise(source, 1)
             audio_text = r.listen(source)
@@ -107,7 +119,7 @@ def get_input():
             print("user input: ", user_output)
 
             user_output = user_output.lower()
-            if "hello" in user_output and "world" in user_output:
+            if "bobby" in user_output:
                 room = False
 
                 for prefix in valid_command_prefixes:
@@ -134,31 +146,52 @@ def get_input():
         else:
             pass
 
-
 def sending_location(location: str):
-    file_path = '../frontend/public/data.json'
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    data["back_to_front_location"] = location  # Modify the location
+    collection = db.collection('HTN2024')  # create collection
 
-    # Write the updated data back to the JSON file
-    with open('data.json', 'w') as file:
-        json.dump(data, file, indent=4)
+    result = collection.document('data').set({  # insert document
+        'back to front': location,
+        'front to back': '',
+    })
 
     while True:
-        # Read the JSON file
-        with open(file_path, 'r') as file:
-            data = json.load(file)
-
-        # Check if 'front_to_back_route' has a value
-        if data.get("front_to_back_route"):
-            play_audio_pygame(data.get("front_to_back_route"))
-            data["front_to_back_route"] = ""
-            with open(file_path, 'w') as file:
-                json.dump(data, file, indent=4)
+        result = collection.document('data').get().to_dict()
+        if result['front to back']:
+            play_audio_pygame(result['front to back'])
+            result = collection.document('data').set({
+                'back to front': '',
+                'front to back': '',
+            })
             break
 
         time.sleep(0.3)
+
+
+
+# def sending_location(location: str):
+#     file_path = '../frontend/public/data.json'
+#     with open(file_path, 'r') as file:
+#         data = json.load(file)
+#     data["back_to_front_location"] = location  # Modify the location
+#
+#     # Write the updated data back to the JSON file
+#     with open('data.json', 'w') as file:
+#         json.dump(data, file, indent=4)
+#
+#     while True:
+#         # Read the JSON file
+#         with open(file_path, 'r') as file:
+#             data = json.load(file)
+#
+#         # Check if 'front_to_back_route' has a value
+#         if data.get("front_to_back_route"):
+#             play_audio_pygame(data.get("front_to_back_route"))
+#             data["front_to_back_route"] = ""
+#             with open(file_path, 'w') as file:
+#                 json.dump(data, file, indent=4)
+#             break
+#
+#         time.sleep(0.3)
 
 
 def text_to_speech(text):
